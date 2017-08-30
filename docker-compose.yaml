@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+  webserver:
+    image: giorgosnikolopoulos/flaskapp:latest
+    ports:
+      - '80:8000'

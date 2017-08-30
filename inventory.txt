@@ -1,0 +1,9 @@
+
+[netscaler]
+
+netscaler_lb nsip=10.78.60.202 nitro_user=nsroot nitro_pass=nsroot validate_certs=no lb_vserver_vip=10.78.60.203
+
+[service_hosts]
+
+10.78.60.205 ansible_user=georgen nsip=10.78.60.202 nitro_user=nsroot nitro_pass=nsroot servername=webserver2 serverip=192.168.10.11
+10.78.60.204 ansible_user=georgen nsip=10.78.60.202 nitro_user=nsroot nitro_pass=nsroot servername=webserver1 serverip=192.168.10.10

@@ -1,0 +1,67 @@
+
+- hosts: service_hosts
+
+  gather_facts: no
+  vars:
+    compose_yaml: /var/tmp/docker-compose.yaml
+
+  tasks:
+    - name: Copy docker-compose.yaml
+      copy:
+        src: docker-compose.yaml
+        dest: "{{ compose_yaml }}"
+
+    - name: Start backend webserver
+      command: docker-compose -f "{{ compose_yaml }}" up -d
+
+    - name: "Init {{ servername }}"
+      command: docker-compose -f "{{ compose_yaml }}" exec -d webserver bash -c "echo 'hello {{ servername }}' > /app/content.txt"
+
+    - name: Setup server "{{ servername }}"
+      delegate_to: localhost
+      netscaler_server:
+        nsip: "{{ nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+
+        state: present
+
+        name: "{{ servername }}"
+        ipaddress: "{{ serverip }}"
+
+    - name: Setup service for "{{ servername }}"
+      delegate_to: localhost
+      netscaler_service:
+        nsip: "{{ nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+
+        state: present
+
+        name: "service_{{ servername }}"
+        servicetype: HTTP
+        servername: "{{ servername }}"
+        port: 80
+
+- hosts: netscaler
+  gather_facts: no
+  tasks:
+    - name: Setup lb vserver
+      delegate_to: localhost
+      netscaler_lb_vserver:
+        nsip: "{{ nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+
+        state: present
+
+        name: lb_vserver_1
+        lbmethod: ROUNDROBIN
+        servicetype: HTTP
+        ipv46: "{{ lb_vserver_vip }}"
+        port: 80
+        servicebindings:
+          - servicename: service_webserver1
+            weight: 50
+          - servicename: service_webserver2
+            weight: 50
